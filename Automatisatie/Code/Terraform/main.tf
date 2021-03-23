@@ -2,7 +2,7 @@
 terraform {
   required_providers {
     azurerm = {
-      source = "hashicorp/azurerm"
+      source  = "hashicorp/azurerm"
       version = ">= 2.26"
     }
   }
@@ -14,15 +14,15 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "rg" {
   name     = "PAMResourceGroup"
-  location = "North Europe"
+  location = var.location
 }
 
 # Create a virtual network
 resource "azurerm_virtual_network" "vnet" {
-    name                = "PAMVnet"
-    address_space       = ["192.168.0.0/16"]
-    location            = "North Europe"
-    resource_group_name = azurerm_resource_group.rg.name
+  name                = "PAMVnet"
+  address_space       = ["192.168.0.0/16"]
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
 }
 
 
@@ -38,7 +38,7 @@ resource "azurerm_subnet" "subnet" {
 # Create public IP
 resource "azurerm_public_ip" "publicip" {
   name                = "PAMPublicIP"
-  location            = "North Europe"
+  location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
 }
@@ -46,7 +46,7 @@ resource "azurerm_public_ip" "publicip" {
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "nsg" {
   name                = "PAMNSG"
-  location            = "North Europe"
+  location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
 
   security_rule {
@@ -88,9 +88,9 @@ resource "azurerm_network_security_group" "nsg" {
 
 # Create network interface
 resource "azurerm_network_interface" "nic" {
-  name                      = "PAMNIC"
-  location                  = "North Europe"
-  resource_group_name       = azurerm_resource_group.rg.name
+  name                = "PAMNIC"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "PAMNICConfg"
@@ -101,5 +101,63 @@ resource "azurerm_network_interface" "nic" {
 }
 
 
+
+
+# Create (and display) an SSH key
+resource "tls_private_key" "example_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+#----------------------------------
+
+# Create Ubuntu virtual machine
+resource "azurerm_linux_virtual_machine" "UbuntuVM" {
+  name                  = var.linux_virtual_machine_name
+  location              = azurerm_resource_group.rg.location
+  resource_group_name   = azurerm_resource_group.rg.name
+  network_interface_ids = [azurerm_network_interface.nic.id]
+  size                  = var.azure_size
+
+  os_disk {
+    name                 = var.linux_virtual_machine_disk_name
+    caching              = "ReadWrite"
+    storage_account_type = var.storage_account_type
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  computer_name                   = var.linux_virtual_machine_computer_name
+  admin_username                  = var.linux_virtual_machine_admin_username
+  admin_password                  = var.linux_virtual_machine_admin_password
+  disable_password_authentication = false
+
+ 
+  admin_ssh_key {
+    username   = var.linux_virtual_machine_admin_username
+    public_key = tls_private_key.example_ssh.public_key_openssh
+  }
+
+
+}
+# Auto shutdown Ubuntu
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "UbuntuAutoShutdown" {
+  virtual_machine_id = azurerm_linux_virtual_machine.UbuntuVM.id
+  location           = var.location
+  enabled            = true
+
+  daily_recurrence_time = "2000"
+  timezone              = "Central European Standard Time" 
+
+  notification_settings {
+    enabled         = false
+    time_in_minutes = "60"
+  }
+}
 
 
