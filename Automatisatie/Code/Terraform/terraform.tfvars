@@ -7,4 +7,8 @@ linux_virtual_machine_name  = "Ubuntu"
 linux_virtual_machine_computer_name  = "Ubuntu"
 linux_virtual_machine_admin_username = "azureuser"
 linux_virtual_machine_admin_password = "StrongPass456"
-linux_virtual_machine_disk_name  = "UbuntuDisk"
+
+
+windows-10-vm-hostname = "Win10"
+windows-10-vm-admin-username = "student40"
+windows-10-vm-admin-password = "StrongPass456"

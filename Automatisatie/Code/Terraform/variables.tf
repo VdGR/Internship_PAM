@@ -36,11 +36,20 @@ variable "linux_virtual_machine_admin_password" {
   description = "Linux VM password"
 }
 
-variable "linux_virtual_machine_disk_name" {
+variable "windows-10-vm-hostname" {
   type        = string
-  description = "Name of Linux VM"
+  description = "Name of Windows10 VM"
 }
 
+variable "windows-10-vm-admin-username" {
+  type        = string
+  description = "Username of Windows10 VM"
+}
+
+variable "windows-10-vm-admin-password" {
+  type        = string
+  description = "Password of Windows10 VM"
+}
 
 
 

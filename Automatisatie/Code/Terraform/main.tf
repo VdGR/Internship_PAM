@@ -35,9 +35,17 @@ resource "azurerm_subnet" "subnet" {
 }
 
 
-# Create public IP
-resource "azurerm_public_ip" "publicip" {
-  name                = "PAMPublicIP"
+# Create public IP for Windows10
+resource "azurerm_public_ip" "W10_publicip" {
+  name                = "W10_publicip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+}
+
+# Create public IP for Ubuntu
+resource "azurerm_public_ip" "Ubuntu_publicip" {
+  name                = "Ubuntu_publicip"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Static"
@@ -86,9 +94,9 @@ resource "azurerm_network_security_group" "nsg" {
   }
 }
 
-# Create network interface
-resource "azurerm_network_interface" "nic" {
-  name                = "PAMNIC"
+# Create network interface for Windows10
+resource "azurerm_network_interface" "Windows10_nic" {
+  name                = "Windows10_nic"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -96,10 +104,23 @@ resource "azurerm_network_interface" "nic" {
     name                          = "PAMNICConfg"
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "dynamic"
-    public_ip_address_id          = azurerm_public_ip.publicip.id
+    public_ip_address_id          = azurerm_public_ip.W10_publicip.id
   }
 }
 
+# Create network interface
+resource "azurerm_network_interface" "Ubuntu_nic" {
+  name                = "Ubuntu_nic"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "PAMNICConfg"
+    subnet_id                     = azurerm_subnet.subnet.id
+    private_ip_address_allocation = "dynamic"
+    public_ip_address_id          = azurerm_public_ip.Ubuntu_publicip.id
+  }
+}
 
 
 
@@ -109,18 +130,18 @@ resource "tls_private_key" "example_ssh" {
   rsa_bits  = 4096
 }
 
-#----------------------------------
+
 
 # Create Ubuntu virtual machine
 resource "azurerm_linux_virtual_machine" "UbuntuVM" {
   name                  = var.linux_virtual_machine_name
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
-  network_interface_ids = [azurerm_network_interface.nic.id]
+  network_interface_ids = [azurerm_network_interface.Ubuntu_nic.id]
   size                  = var.azure_size
 
-  os_disk {
-    name                 = var.linux_virtual_machine_disk_name
+  os_disk {      
+    name                 = "${var.linux_virtual_machine_computer_name}-os-disk"
     caching              = "ReadWrite"
     storage_account_type = var.storage_account_type
   }
@@ -145,9 +166,37 @@ resource "azurerm_linux_virtual_machine" "UbuntuVM" {
 
 
 }
-# Auto shutdown Ubuntu
-resource "azurerm_dev_test_global_vm_shutdown_schedule" "UbuntuAutoShutdown" {
-  virtual_machine_id = azurerm_linux_virtual_machine.UbuntuVM.id
+
+# Create Windows 10 Virtual Machine
+resource "azurerm_windows_virtual_machine" "Windows10VM" {
+  name                  = var.windows-10-vm-hostname
+  location              = azurerm_resource_group.rg.location
+  resource_group_name   = azurerm_resource_group.rg.name
+  size                  = var.azure_size
+  network_interface_ids = [azurerm_network_interface.Windows10_nic.id]
+  
+  computer_name         = var.windows-10-vm-hostname
+  admin_username        = var.windows-10-vm-admin-username
+  admin_password        = var.windows-10-vm-admin-password
+  os_disk {
+    name                 = "${var.windows-10-vm-hostname}-os-disk"
+    caching              = "ReadWrite"
+    storage_account_type = var.storage_account_type
+  }
+  source_image_reference {
+    publisher = "MicrosoftWindowsDesktop"
+    offer     = "windows-10"
+    sku       = "19h2-pro-g2"
+    version   = "latest"
+  }
+  enable_automatic_updates = false
+  provision_vm_agent       = true
+}
+
+# Auto shutdown WIP
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "AutoShutdown" {
+  virtual_machine_id = azurerm_windows_virtual_machine.Windows10VM.id
+  
   location           = var.location
   enabled            = true
 
@@ -159,5 +208,4 @@ resource "azurerm_dev_test_global_vm_shutdown_schedule" "UbuntuAutoShutdown" {
     time_in_minutes = "60"
   }
 }
-
 
