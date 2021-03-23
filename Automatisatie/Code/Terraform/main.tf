@@ -51,6 +51,14 @@ resource "azurerm_public_ip" "Ubuntu_publicip" {
   allocation_method   = "Static"
 }
 
+# Create public IP for WS
+resource "azurerm_public_ip" "WServer_publicip" {
+  name                = "WServer_publicip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+}
+
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "nsg" {
   name                = "PAMNSG"
@@ -108,7 +116,7 @@ resource "azurerm_network_interface" "Windows10_nic" {
   }
 }
 
-# Create network interface
+# Create network interface for Ubuntu
 resource "azurerm_network_interface" "Ubuntu_nic" {
   name                = "Ubuntu_nic"
   location            = var.location
@@ -122,7 +130,19 @@ resource "azurerm_network_interface" "Ubuntu_nic" {
   }
 }
 
+# Create network interface for WS
+resource "azurerm_network_interface" "WindowsServer_nic" {
+  name                = "WindowsServer_nic"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
 
+  ip_configuration {
+    name                          = "PAMNICConfg"
+    subnet_id                     = azurerm_subnet.subnet.id
+    private_ip_address_allocation = "dynamic"
+    public_ip_address_id          = azurerm_public_ip.WServer_publicip.id
+  }
+}
 
 # Create (and display) an SSH key
 resource "tls_private_key" "example_ssh" {
@@ -141,7 +161,7 @@ resource "azurerm_linux_virtual_machine" "UbuntuVM" {
   size                  = var.azure_size
 
   os_disk {      
-    name                 = "${var.linux_virtual_machine_computer_name}-os-disk"
+    name                 = "${var.linux_virtual_machine_name}-os-disk"
     caching              = "ReadWrite"
     storage_account_type = var.storage_account_type
   }
@@ -153,7 +173,7 @@ resource "azurerm_linux_virtual_machine" "UbuntuVM" {
     version   = "latest"
   }
 
-  computer_name                   = var.linux_virtual_machine_computer_name
+  computer_name                   = var.linux_virtual_machine_name
   admin_username                  = var.linux_virtual_machine_admin_username
   admin_password                  = var.linux_virtual_machine_admin_password
   disable_password_authentication = false
@@ -189,9 +209,36 @@ resource "azurerm_windows_virtual_machine" "Windows10VM" {
     sku       = "19h2-pro-g2"
     version   = "latest"
   }
-  enable_automatic_updates = false
+  enable_automatic_updates = true
   provision_vm_agent       = true
 }
+
+# Create Windows Server Virtual Machine
+resource "azurerm_windows_virtual_machine" "WindowsServerVM" {
+  name                  = var.windows-server-vm-hostname
+  location              = azurerm_resource_group.rg.location
+  resource_group_name   = azurerm_resource_group.rg.name
+  size                  = var.azure_size
+  network_interface_ids = [azurerm_network_interface.WindowsServer_nic.id]
+  
+  computer_name         = var.windows-server-vm-hostname
+  admin_username        = var.windows-server-vm-admin-username
+  admin_password        = var.windows-server-vm-admin-password
+  os_disk {
+    name                 = "${var.windows-server-vm-hostname}-os-disk"
+    caching              = "ReadWrite"
+    storage_account_type = var.storage_account_type
+  }
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2016-Datacenter"
+    version   = "latest"
+  }
+  enable_automatic_updates = true
+  provision_vm_agent       = true
+}
+
 
 # Auto shutdown WIP
 resource "azurerm_dev_test_global_vm_shutdown_schedule" "AutoShutdown" {

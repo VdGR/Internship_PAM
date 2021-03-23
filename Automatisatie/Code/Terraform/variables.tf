@@ -21,11 +21,6 @@ variable "linux_virtual_machine_name" {
   description = "Linux VM name in Azure"
 }
 
-variable "linux_virtual_machine_computer_name" {
-  type        = string
-  description = "Linux VM computername"
-}
-
 variable "linux_virtual_machine_admin_username" {
   type        = string
   description = "Linux VM username"
@@ -52,6 +47,20 @@ variable "windows-10-vm-admin-password" {
 }
 
 
+variable "windows-server-vm-hostname" {
+  type        = string
+  description = "Password of Windows10 VM"
+}
 
+
+variable "windows-server-vm-admin-username" {
+  type        = string
+  description = "Password of Windows10 VM"
+}
+
+variable "windows-server-vm-admin-password" {
+  type        = string
+  description = "Password of Windows10 VM"
+}
 
 
