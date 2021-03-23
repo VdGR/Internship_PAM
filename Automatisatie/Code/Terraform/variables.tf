@@ -16,6 +16,18 @@ variable "storage_account_type" {
   
 }
 
+variable "timezone" {
+  type        = string
+  description = "timezone"
+  
+}
+
+variable "daily_recurrence_time" {
+  type        = string
+  description = "daily_recurrence_time for shutdown"
+  
+}
+
 variable "linux_virtual_machine_name" {
   type        = string
   description = "Linux VM name in Azure"

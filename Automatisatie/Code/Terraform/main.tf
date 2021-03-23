@@ -139,7 +139,8 @@ resource "azurerm_network_interface" "WindowsServer_nic" {
   ip_configuration {
     name                          = "PAMNICConfg"
     subnet_id                     = azurerm_subnet.subnet.id
-    private_ip_address_allocation = "dynamic"
+    private_ip_address_allocation = "static"
+    private_ip_address            = "192.168.1.10"
     public_ip_address_id          = azurerm_public_ip.WServer_publicip.id
   }
 }
@@ -240,15 +241,15 @@ resource "azurerm_windows_virtual_machine" "WindowsServerVM" {
 }
 
 
-# Auto shutdown WIP
-resource "azurerm_dev_test_global_vm_shutdown_schedule" "AutoShutdown" {
+# Auto shutdown for Windows10VM
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "Windows10VM-AutoShutdown" {
   virtual_machine_id = azurerm_windows_virtual_machine.Windows10VM.id
   
   location           = var.location
   enabled            = true
 
-  daily_recurrence_time = "2000"
-  timezone              = "Central European Standard Time" 
+  daily_recurrence_time = var.daily_recurrence_time
+  timezone              = var.timezone
 
   notification_settings {
     enabled         = false
@@ -256,3 +257,34 @@ resource "azurerm_dev_test_global_vm_shutdown_schedule" "AutoShutdown" {
   }
 }
 
+# Auto shutdown for UbuntuVM
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "UbuntuVM-AutoShutdown" {
+  virtual_machine_id = azurerm_linux_virtual_machine.UbuntuVM.id
+  
+  location           = var.location
+  enabled            = true
+
+  daily_recurrence_time = var.daily_recurrence_time
+  timezone              = var.timezone
+
+  notification_settings {
+    enabled         = false
+    time_in_minutes = "60"
+  }
+}
+
+# Auto shutdown for WindowsServerVM
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "WindowsServerVM-AutoShutdown" {
+  virtual_machine_id = azurerm_windows_virtual_machine.WindowsServerVM.id
+  
+  location           = var.location
+  enabled            = true
+
+  daily_recurrence_time = var.daily_recurrence_time
+  timezone              = var.timezone
+
+  notification_settings {
+    enabled         = false
+    time_in_minutes = "60"
+  }
+}
