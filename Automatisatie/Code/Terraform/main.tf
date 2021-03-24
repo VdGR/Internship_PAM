@@ -59,14 +59,15 @@ resource "azurerm_public_ip" "WServer_publicip" {
   allocation_method   = "Static"
 }
 
-# Create Network Security Group and rule
-resource "azurerm_network_security_group" "nsg" {
-  name                = "PAMNSG"
+# Create Network Security Group for Linux
+resource "azurerm_network_security_group" "Linux_nsg" {
+  name                = "Linux_nsg"
   location            = var.location
   resource_group_name = azurerm_resource_group.rg.name
 
+  #SSH
   security_rule {
-    name                       = "SSH"
+    name                       = "Allow-SSH"
     priority                   = 1001
     direction                  = "Inbound"
     access                     = "Allow"
@@ -77,8 +78,18 @@ resource "azurerm_network_security_group" "nsg" {
     destination_address_prefix = "*"
   }
 
+ 
+}
+
+# Create Network Security Group for Windows
+resource "azurerm_network_security_group" "Windows_nsg" {
+  name                = "Windows_nsg"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  # RDP
   security_rule {
-    name                       = "RDP"
+    name                       = "Allow-RDP"
     priority                   = 1002
     direction                  = "Inbound"
     access                     = "Allow"
@@ -89,8 +100,9 @@ resource "azurerm_network_security_group" "nsg" {
     destination_address_prefix = "*"
   }
 
+  # HTTPS
   security_rule {
-    name                       = "HTTPS"
+    name                       = "Allow-HTTPS"
     priority                   = 1003
     direction                  = "Inbound"
     access                     = "Allow"
@@ -100,7 +112,40 @@ resource "azurerm_network_security_group" "nsg" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  # WinRM
+  security_rule {
+    name                       = "Allow-WinRM"
+    priority                   = 1004
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5985"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
+
+
+# Associate NSG with the NIC of Ubuntu
+resource "azurerm_network_interface_security_group_association" "UbuntuNICNSG" {
+  network_interface_id      = azurerm_network_interface.Ubuntu_nic.id
+  network_security_group_id = azurerm_network_security_group.Linux_nsg.id
+}
+
+# Associate NSG with the NIC of W10
+resource "azurerm_network_interface_security_group_association" "W10NICNSG" {
+  network_interface_id      = azurerm_network_interface.Windows10_nic.id
+  network_security_group_id = azurerm_network_security_group.Windows_nsg.id
+}
+
+# Associate NSG with the NIC of WS
+resource "azurerm_network_interface_security_group_association" "WSNICNSG" {
+  network_interface_id      = azurerm_network_interface.WindowsServer_nic.id
+  network_security_group_id = azurerm_network_security_group.Windows_nsg.id
+}
+
 
 # Create network interface for Windows10
 resource "azurerm_network_interface" "Windows10_nic" {
