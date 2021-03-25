@@ -1,0 +1,4 @@
+Automatisatie/Code/Terraform/.terraform/*
+Automatisatie/Code/Terraform/.terraform.*
+Automatisatie/Code/Terraform/terraform.*
+!Automatisatie/Code/Terraform/terraform.tfvars

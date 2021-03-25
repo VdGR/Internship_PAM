@@ -230,6 +230,28 @@ resource "azurerm_linux_virtual_machine" "UbuntuVM" {
     public_key = tls_private_key.example_ssh.public_key_openssh
   }
 
+  connection {
+		type        = "ssh"
+		host        = self.public_ip_address
+		user        = var.linux_virtual_machine_admin_username
+		password    = var.linux_virtual_machine_admin_password
+		# Default timeout is 5 minutes
+		timeout     = "4m"
+  }
+
+  provisioner "file" {
+    source      = var.bash-file
+    destination = "/tmp/${var.bash-file}"
+  }
+  
+  provisioner "remote-exec" {
+
+    inline = [
+      "chmod +x /tmp/${var.bash-file}",
+      "sed -i -e 's/\r$//' /tmp/${var.bash-file}",
+      "sudo bash /tmp/${var.bash-file} ${var.mysql-password}",
+    ]
+  }
 
 }
 
@@ -333,3 +355,4 @@ resource "azurerm_dev_test_global_vm_shutdown_schedule" "WindowsServerVM-AutoShu
     time_in_minutes = "60"
   }
 }
+

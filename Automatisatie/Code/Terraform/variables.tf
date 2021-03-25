@@ -75,4 +75,17 @@ variable "windows-server-vm-admin-password" {
   description = "Password of Windows10 VM"
 }
 
+variable "bash-file" {
+  type        = string
+  description = "Bash file that executes after deployment"
+}
+
+variable "mysql-password" {
+  type        = string
+  description = "Password of mysql"
+}
+
+
+
+
 
