@@ -85,6 +85,17 @@ variable "mysql-password" {
   description = "Password of mysql"
 }
 
+variable "ad-users-file" {
+  type        = string
+  description = "Path of csv file"
+}
+
+variable "ad-ps-file" {
+  type        = string
+  description = "Password of mysql"
+}
+
+
 
 
 

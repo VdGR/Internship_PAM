@@ -18,6 +18,9 @@ windows-server-vm-admin-username = "halloo"
 windows-server-vm-admin-password = "Appelmoes123"
 
 
-bash-file = "mysql.sh"
 
+bash-file = "mysql.sh"
 mysql-password = "User12345!"
+
+ad-users-file = "users.csv"
+ad-ps-file = "AD.ps1"
