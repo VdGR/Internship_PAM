@@ -54,33 +54,9 @@ resource "azurerm_windows_virtual_machine" "WindowsServerVM" {
     version   = "latest"
   }
   enable_automatic_updates = true
+
+
 /*
-  os_profile_windows_config {
-    provision_vm_agent = true
-    winrm {
-      protocol = "http"
-  }
-  }
-
-
-  # Auto-Login's required to configure WinRM
-  additional_unattend_config {
-      pass         = "oobeSystem"
-      component    = "Microsoft-Windows-Shell-Setup"
-      setting_name = "AutoLogon"
-      content      = "<AutoLogon><Password><Value>${var.windows-server-vm-admin-password}</Value></Password><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>${var.windows-server-vm-admin-username}</Username></AutoLogon>"
-  }  
-  
-
-  # Unattend config is to enable basic auth in WinRM, required for the provisioner stage.
-  additional_unattend_config {
-      pass         = "oobeSystem"
-      component    = "Microsoft-Windows-Shell-Setup"
-      setting_name = "FirstLogonCommands"
-      content      = file("FirstLogonCommands.xml")
-  }
-
-
   connection {
     type     = "winrm"
     user     = var.windows-server-vm-admin-username

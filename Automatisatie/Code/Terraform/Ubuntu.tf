@@ -26,6 +26,12 @@ resource "azurerm_network_interface" "Ubuntu_nic" {
   }
 }
 
+# Create SSH key for Ubuntu
+resource "tls_private_key" "Ubuntu_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 # Create Ubuntu virtual machine
 resource "azurerm_linux_virtual_machine" "UbuntuVM" {
   name                  = var.linux_virtual_machine_name
@@ -55,7 +61,7 @@ resource "azurerm_linux_virtual_machine" "UbuntuVM" {
  
   admin_ssh_key {
     username   = var.linux_virtual_machine_admin_username
-    public_key = tls_private_key.example_ssh.public_key_openssh
+    public_key = tls_private_key.Ubuntu_ssh.public_key_openssh
   }
 
   connection {
