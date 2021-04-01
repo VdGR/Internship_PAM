@@ -1,81 +1,52 @@
 import re
-import csv
 
+new_device = '___________________________________________________________________________'
+in_file = "inventory-list - kopie.txt"
+out_file = "csv_allnex.csv"
 
-def findSome(right, text):
-    substring = re.search('(.+?){}'.format(right), text)
+def checkLine(regex, text, group=1):
+    substring = re.search("{}".format(regex), text)
     if substring is not None:
-        return substring.group(0)
-    return None
-
-def findName(text):
-    substring = re.search('NAME:(.*), DESCR:', text)
-    if substring is not None:
-        return substring.group(1)
-    return None
-
-def findPIDandSN(text):
-    substring = re.search('PID(.*)', text)
-    if substring is not None:
-        return substring.group(1)
+        return substring.group(group)
     return None
 
 
-#with open('devices.csv', mode='w') as employee_file:
-#    csv_writer = csv.writer(employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-#    csv_writer.writerow([hostname, ip, stackmember, product_id, serial])
-
-count = 0
-
+countLines = 0
 hostname = ""
 ip = ""
 stackmember = ""
 product_id = ""
 serial = ""
-with open("inventory-list - kopie.txt") as fp:
-
+countDevices = 0
+with open(in_file) as fp:
     for line in fp:
+        countLines += 1
 
-        count += 1
-        #print("Line{}: {}".format(count, line.strip()))
-        #hostname = findSome('coatings.com',line)
-        hostname_ip = findSome('\\):', line)
-        if findSome('\\):', line) is not None:
-            hostname = re.search('(.*) \\(', hostname_ip).group(1)
-            ip = re.search('\\((.*)\\):', hostname_ip).group(1)
-        if findName(line) is not None:
-            stackmember = findName(line).replace('"','')
-        if findPIDandSN(line) is not None:
-            product_id = re.search(': (.*) VID', findPIDandSN(line)).group(1).strip(' ').strip(',')
-            serial = re.search('SN:(.*)', findPIDandSN(line)).group(1).strip(' ')
+        if checkLine("(.*)\\):", line, 0) is not None:
+            hostname_and_ip = checkLine('(.*)\\):', line, 0)
+            hostname = checkLine('(.*) \\(', hostname_and_ip)
+            ip = checkLine('\\((.*)\\):', hostname_and_ip)
+            countDevices += 1
 
+        if checkLine('NAME:(.*), DESCR:', line) is not None:
+            stackmember = checkLine('NAME:(.*), DESCR:', line).strip().replace('"', "")
 
+        if checkLine('PID(.*)', line) is not None:
+            pid_and_sn = checkLine('PID(.*)', line)
+            product_id = checkLine(': (.*) VID',pid_and_sn).strip(',').strip()
+            serial = checkLine('SN:(.*)',pid_and_sn).strip()
 
-        #print(hostname,ip,stackmember,product_id,serial)
-        csvline = '{},{},{},{},{}\n'.format(hostname,ip,stackmember,product_id,serial)
-       # if hostname is not None & ip is not None
+        if hostname != "" and ip != "" and stackmember != "" and product_id != "" and serial != "":
+            csvline = '{},{},{},{},{}\n'.format(hostname, ip, stackmember, product_id, serial)
+            f = open(out_file, "a")
+            f.write(csvline)
 
-
-        #if (hostname == '' && ip == '' ):
-
-        f = open("csv_allnex.csv", "a")
-        f.write(csvline)
-
-
-
-        if '___________________________________________________________________________' in line:
-            #print('New Device')
+        if new_device in line:
+            print('Device: {}'.format(countDevices))
             hostname = ""
             ip = ""
             stackmember = ""
             product_id = ""
             serial = ""
-
-
-
-        #print(findSome('\\):', line))
-
-
-
 
 
