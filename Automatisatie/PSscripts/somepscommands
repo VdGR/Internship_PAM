@@ -1,0 +1,65 @@
+# tzutil /l         list time zones
+#Get-TimeZone -ListAvailable
+Set-TimeZone -Name "Romance Standard Time"  
+
+# change dns ip  #Get-NetAdapter
+Set-DnsClientServerAddress -InterfaceAlias Ethernet0 -ServerAddresses 192.168.11.100  
+
+
+
+Set-ItemProperty -Path "HKCU:\Control Panel\International" -Name sCountry -Value "Belgium";
+Set-ItemProperty -Path "HKCU:\Control Panel\International" -Name sTimeFormat -Value "HH:mm:ss";
+
+#  firewall rules for wmi, remote management
+netsh advfirewall firewall set rule group="windows management instrumentation (wmi)" new enable=yes
+Enable-PSRemoting
+Enable-NetFirewallRule -DisplayName "Windows Management Instrumentation (DCOM-In)"
+Enable-NetFirewallRule -DisplayGroup "Remote Event Log Management"
+Enable-NetFirewallRule -DisplayGroup "Remote Service Management"
+Enable-NetFirewallRule -DisplayGroup "Remote Volume Management"
+Enable-NetFirewallRule -DisplayGroup "Windows Firewall Remote Management"
+Enable-NetFirewallRule -DisplayGroup "Remote Event Log Management"
+Enable-NetFirewallRule -DisplayGroup "Remote Scheduled Tasks Management"
+Enable-NetFirewallRule -DisplayGroup "Remote Firewall Display Group"
+Enable-NetFirewallRule -DisplayGroup "Windows Defender Firewall Remote Management"
+
+# ps listing 
+(Get-ADComputer -Filter *).Name
+(Get-ADUser -Filter *).Name
+
+# run reg file
+regedit.exe /S yourfile.reg
+
+
+#show file extensions
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 0 /f
+reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced /v HideFileExt /t REG_DWORD /d 1 /f
+function ShowFileExtensions() 
+{
+    Push-Location
+    Set-Location HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    Set-ItemProperty . HideFileExt "0"
+    Pop-Location
+}
+
+function HideFileExtensions() 
+{
+    Push-Location
+    Set-Location HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    Set-ItemProperty . HideFileExt "1"
+    Pop-Location
+}
+
+#http://woshub.com/install-rsat-feature-windows-10-powershell/
+Add-WindowsCapability -Online -Name Rsat.ServerManager.Tools~~~~0.0.1.0
+Add-WindowsCapability –online –Name “Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0”
+
+#ip nic settings
+netsh interface ip set address name="Ethernet0" static 10.1.2.220 255.255.255.0 10.1.2.1
+#change hostname
+WMIC computersystem where caption='CURRENT-PC-NAME' rename NEWPCNAME
+Rename-Computer -NewName "NEW-PC-NAME"
+#open adapter settings 
+ncpa.cpl
+#open diskmanagment
+diskmgmt.msc
